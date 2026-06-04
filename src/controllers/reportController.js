@@ -62,7 +62,7 @@ const getReports = asyncHandler(async (req, res) => {
   }
   // If classId supplied, return per-student fund breakdown and totals (respecting caste map)
   if (classId) {
-    const classDoc = await ClassModel.findById(classId);
+    const classDoc = await ClassModel.findById(classId).populate('teacherId', 'name');
     if (!classDoc) return res.status(404).json({ message: 'Class not found' });
 
     const feeSetup = normalizeFeeSetup(classDoc.feeSetup || {});
@@ -109,10 +109,11 @@ const getReports = asyncHandler(async (req, res) => {
         registrationStatus: student.registrationStatus || 'registered',
         classId: classDoc._id,
         className: classDoc.name,
-        teacherName: '',
+        teacherName: classDoc.teacherId?.name || '',
         month: month || '',
         year: year ? Number(year) : '',
         paymentMethod,
+        feeStatus: paymentMethod,
         total,
         funds,
       };
@@ -147,6 +148,7 @@ const getReports = asyncHandler(async (req, res) => {
     month: record.month,
     year: record.year,
     paymentMethod: record.paymentMethod,
+    feeStatus: record.paymentMethod,
   }));
 
   const summary = {
